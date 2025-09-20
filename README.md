@@ -60,8 +60,4 @@ SereneMind provides a **freemium mental wellness platform** with interactive mod
 
 ---
 
- 
 
-
-## 📜 License
-This project is licensed under the MIT License.

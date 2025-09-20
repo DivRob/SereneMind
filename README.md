@@ -1,4 +1,4 @@
-![SereneMind] <img width="1024" height="1024" alt="Gemini_Generated_Image_c8p05vc8p05vc8p0 1" src="https://github.com/user-attachments/assets/8ce6acc8-bf08-48d9-af60-41fefe85739a" />
+[SereneMind] <img width="500" height="500" alt="Gemini_Generated_Image_c8p05vc8p05vc8p0 1" src="https://github.com/user-attachments/assets/8ce6acc8-bf08-48d9-af60-41fefe85739a" />
 
 Basic Details
 Team Name: [BitRot]

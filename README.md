@@ -1,16 +1,16 @@
-[SereneMind] <img width="500" height="500" alt="Gemini_Generated_Image_c8p05vc8p05vc8p0 1" src="https://github.com/user-attachments/assets/8ce6acc8-bf08-48d9-af60-41fefe85739a" />
+#SereneMind <img width="500" height="500" alt="Gemini_Generated_Image_c8p05vc8p05vc8p0 1" src="https://github.com/user-attachments/assets/8ce6acc8-bf08-48d9-af60-41fefe85739a" />
 
-Basic Details
-Team Name: [BitRot]
-Team Members
-Member 1: [Sara Nisam] - [RIT,KOTTAYAM GEC]
-Member 2: [Gouri B] - [RIT,KOTTAYAM GEC]
-Member 3: [Divya Robin] - [RIT,KOTTAYAM GEC]
+##Basic Details
+###Team Name: BitRot
+###Team Members
+Member 1: Sara Nisam - RIT,KOTTAYAM GEC
+Member 2: Gouri B - RIT,KOTTAYAM GEC
+Member 3: Divya Robin - RIT,KOTTAYAM GEC
 
 
 
-[Project Description]
-[The Problem ]
+##Project Description
+##The Problem 
 
 Many young people experience stress, anxiety, or loneliness in their daily lives—especially nowadays with more digital isolation, pandemic after-effects, and pressures from studies/work. Often they want relief, but either don’t know which technique to try, get overwhelmed by choices, or don’t have a consistent, engaging way to practice mindfulness and mental wellbeing.
 

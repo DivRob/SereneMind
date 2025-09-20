@@ -62,7 +62,8 @@ Screenshots (Add at least 3)
 ](screenshot 3 the personalised ai chatbot) 
 
 Diagrams
-![Workflow]
+![![WhatsApp Image 2025-09-21 at 05 01 44_a59f6909](https://github.com/user-attachments/assets/56ed01eb-ec8a-4eaf-85af-0e89a57bf2ce)
+]
 
 Project Demo
 Video

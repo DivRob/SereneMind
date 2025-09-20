@@ -6,10 +6,12 @@ Team Members
 Member 1: [Sara Nisam] - [RIT,KOTTAYAM GEC]
 Member 2: [Gouri B] - [RIT,KOTTAYAM GEC]
 Member 3: [Divya Robin] - [RIT,KOTTAYAM GEC]
+
+
+
 Project Description
+[The Problem ]
 
-
-The Problem 
 Many young people experience stress, anxiety, or loneliness in their daily lives—especially nowadays with more digital isolation, pandemic after-effects, and pressures from studies/work. Often they want relief, but either don’t know which technique to try, get overwhelmed by choices, or don’t have a consistent, engaging way to practice mindfulness and mental wellbeing.
 
 More specifically:
@@ -22,7 +24,8 @@ Boredom or negative emotions often make people avoid starting wellness practices
 
 Lack of variety: doing just breathing exercises gets repetitive; a single tool is not enough to sustain long-term engagement.
 
-The Solution 
+[The Solution ]
+
 SereneMind is built to address these problems by offering a friendly, engaging, and interactive mental wellness web app. The solution components include:
 
 Multiple calming exercises → e.g. breathing exercises, 5-4-3-2-1 mindfulness grounding technique, etc., so users can pick what suits their current mood.
@@ -37,7 +40,7 @@ Clean, friendly UI → minimalistic, soothing design so there’s no intimidatio
 
 SereneMind combines these features so that users have a variety of tools, can decide what works best, and can use them often—making mindfulness / stress relief a habit, not a chore.
 
-Technical Details
+[Technical Details]
 Technologies/Components Used
 For Software:
 
@@ -46,7 +49,7 @@ For Software:
 
 
 
-Project Documentation
+[Project Documentation]
 For Software:
 
 Screenshots (Add at least 3)

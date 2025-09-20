@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindful Breathing Exercise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --circle-start-color: #a8d8ea;
+            --circle-end-color: #7ab7d8;
+            --circle-hold-color: #5e9ec7;
+            --shadow-color: rgba(120, 180, 220, 0.4);
+            --text-color: #334155;
+            --btn-bg-color: #ffffff;
+            --btn-border-color: #cbd5e1;
+            --btn-hover-bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .breathing-circle {
+            width: 200px;
+            height: 200px;
+            margin: 100px;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center h-screen m-0 overflow-hidden">
+
+    <div class="flex flex-col items-center justify-center text-center w-full p-5">
+        <div id="breathing-circle" class="breathing-circle rounded-full flex justify-center items-center" style="background: linear-gradient(135deg, var(--circle-start-color) 0%, var(--circle-end-color) 100%); box-shadow: 0 0 30px var(--shadow-color);">
+            <p id="status" class="text-xl font-medium text-white transition-opacity duration-300">Press Start to Begin</p>
+        </div>
+        
+        <button id="startBtn" class="mt-12 text-base font-medium py-3 px-6 rounded-lg border border-slate-300 bg-white shadow-sm transition-all hover:bg-slate-50 hover:shadow-md">Start Exercise</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('startBtn');
+            const breathingCircle = document.getElementById('breathing-circle');
+            const statusDisplay = document.getElementById('status');
+            
+            const phases = ['inhale', 'hold', 'exhale', 'rest'];
+            const phaseTimes = [4000, 2000, 4000, 2000]; // in ms
+            
+            let isRunning = false;
+            let currentPhaseIndex = 0;
+            let phaseStartTime = 0;
+
+            // --- Main Controller ---
+            function startExercise() {
+                if (isRunning) {
+                    stopExercise();
+                    return;
+                }
+                
+                isRunning = true;
+                startBtn.textContent = 'Stop Exercise';
+                currentPhaseIndex = 0;
+                phaseStartTime = Date.now();
+                updateStatusText();
+                requestAnimationFrame(animationLoop);
+            }
+
+            function stopExercise() {
+                isRunning = false;
+                startBtn.textContent = 'Start Exercise';
+                statusDisplay.textContent = 'Exercise stopped.';
+                resetCircle();
+            }
+            
+            // --- Unified Animation and Timing Loop ---
+            function animationLoop() {
+                if (!isRunning) return;
+
+                const now = Date.now();
+                let elapsed = now - phaseStartTime;
+                const currentPhaseDuration = phaseTimes[currentPhaseIndex];
+
+                if (elapsed >= currentPhaseDuration) {
+                    elapsed = 0;
+                    phaseStartTime = now;
+                    currentPhaseIndex = (currentPhaseIndex + 1) % phases.length;
+                    updateStatusText();
+                }
+
+                const progress = elapsed / currentPhaseDuration;
+                updateCircleAppearance(phases[currentPhaseIndex], progress);
+                requestAnimationFrame(animationLoop);
+            }
+
+            // --- Visual Updates ---
+            function updateCircleAppearance(phase, progress) {
+                let scale, shadowSize, shadowOpacity;
+
+                switch(phase) {
+                    case 'inhale':
+                        scale = 1 + 0.8 * progress;
+                        shadowSize = 20 + 30 * progress;
+                        shadowOpacity = 0.4 + 0.2 * progress;
+                        breathingCircle.style.background = `linear-gradient(135deg, #a8d8ea, #7ab7d8)`;
+                        break;
+                    case 'hold':
+                        scale = 1.8;
+                        shadowSize = 50;
+                        shadowOpacity = 0.6;
+                        breathingCircle.style.background = `linear-gradient(135deg, #7ab7d8, #5e9ec7)`;
+                        break;
+                    case 'exhale':
+                        scale = 1.8 - 0.8 * progress;
+                        shadowSize = 50 - 30 * progress;
+                        shadowOpacity = 0.6 - 0.2 * progress;
+                        breathingCircle.style.background = `linear-gradient(135deg, #7ab7d8, #5e9ec7)`;
+                        break;
+                    case 'rest':
+                        scale = 1;
+                        shadowSize = 20;
+                        shadowOpacity = 0.4;
+                        breathingCircle.style.background = `linear-gradient(135deg, #a8d8ea, #7ab7d8)`;
+                        break;
+                }
+                breathingCircle.style.transform = `scale(${scale})`;
+                breathingCircle.style.boxShadow = `0 0 ${shadowSize}px rgba(120, 180, 220, ${shadowOpacity})`;
+            }
+
+            function updateStatusText() {
+                const phase = phases[currentPhaseIndex];
+                const newText = phase.charAt(0).toUpperCase() + phase.slice(1) + '...';
+                
+                // Fade out, change text, fade in
+                statusDisplay.style.opacity = '0';
+                setTimeout(() => {
+                    statusDisplay.textContent = newText;
+                    statusDisplay.style.opacity = '1';
+                }, 150);
+            }
+            
+            function resetCircle() {
+                breathingCircle.style.transform = 'scale(1)';
+                breathingCircle.style.background = 'linear-gradient(135deg, #a8d8ea, #7ab7d8)';
+                breathingCircle.style.boxShadow = '0 0 30px rgba(120, 180, 220, 0.4)';
+            }
+            
+            // --- Event Listeners ---
+            startBtn.addEventListener('click', startExercise);
+        });
+    </script>
+</body>
+</html>

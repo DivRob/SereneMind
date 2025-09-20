@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Journey</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #1a202c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+            max-height: 95vh;
+            position: relative;
+        }
+        .view-section {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column;
+            padding: 1.5rem;
+        }
+        .view-section.active {
+            display: flex;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Scripting for application logic -->
+    <script type="text/javascript">
+        // Global data store using localStorage
+        let userData;
+
+        let getTaskBtn, pointsDisplay, badgesDisplay, userProgress, reframeInput, reframeOutput, reframeSendBtn, screenBreakTimer, screenBreakStartBtn, reframeBackButton, screenBreakBackButton, dailyMessageDisplay, thoughtHistoryDisplay, inspirationPromptDisplay, inspirationInput, inspirationSubmitBtn, inspirationBackButton, statusModal, statusMessage;
+        
+        // --- UI Functions ---
+        function showView(viewId) {
+            const views = document.querySelectorAll('.view-section');
+            views.forEach(view => {
+                if (view.id === viewId) {
+                    view.classList.add('active');
+                } else {
+                    view.classList.remove('active');
+                }
+            });
+        }
+        
+        function showModal(message) {
+            statusMessage.textContent = message;
+            statusModal.classList.add('show');
+            setTimeout(() => {
+                statusModal.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateUI() {
+            pointsDisplay.textContent = userData.points;
+            badgesDisplay.innerHTML = userData.badges.map(badge => `
+                <span class="bg-yellow-400 text-yellow-900 text-xs font-semibold px-2 py-1 rounded-full">
+                    ${badge}
+                </span>
+            `).join(' ');
+            userProgress.textContent = `Completed: ${userData.completedTasks} tasks`;
+            thoughtHistoryDisplay.innerHTML = userData.thoughtHistory.reverse().map(thought => `
+                <div class="bg-gray-100 p-3 rounded-xl mb-2">
+                    <p class="text-sm font-semibold text-gray-700">Negative: "${thought.negative}"</p>
+                    <p class="text-xs text-gray-500 mt-1">Positive: "${thought.positive}"</p>
+                </div>
+            `).join('');
+        }
+
+        // --- Core Logic ---
+        function initializeUserData() {
+            const storedData = localStorage.getItem('wellnessAppUserData');
+            if (storedData) {
+                userData = JSON.parse(storedData);
+            } else {
+                userData = {
+                    points: 0,
+                    completedTasks: 0,
+                    badges: [],
+                    thoughtHistory: []
+                };
+                localStorage.setItem('wellnessAppUserData', JSON.stringify(userData));
+            }
+            updateUI();
+        }
+
+        function updateUserData(updates) {
+            if (updates.points) {
+                userData.points += updates.points;
+            }
+            if (updates.completedTasks) {
+                userData.completedTasks += updates.completedTasks;
+            }
+            if (updates.thoughtHistory) {
+                userData.thoughtHistory.push(updates.thoughtHistory);
+            }
+            
+            if (userData.points >= 10 && !userData.badges.includes('Novice')) userData.badges.push('Novice');
+            if (userData.points >= 50 && !userData.badges.includes('Habit Builder')) userData.badges.push('Habit Builder');
+            if (userData.points >= 100 && !userData.badges.includes('Mindful Master')) userData.badges.push('Mindful Master');
+
+            localStorage.setItem('wellnessAppUserData', JSON.stringify(userData));
+            updateUI();
+        }
+        
+        // Gemini API Functions
+        async function callGeminiApi(systemPrompt, userQuery) {
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                model: "gemini-2.5-flash-preview-05-20"
+            };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (error) {
+                console.error("Gemini API error:", error);
+                return null;
+            }
+        }
+        
+        async function generateDailyMessage() {
+            const systemPrompt = "You are an encouraging and wise mentor. Provide a short, uplifting message for the day. Keep it positive and concise, no more than 20 words. Do not use quotes or mention a specific person's name.";
+            const userQuery = "Generate a short, inspiring message for the day.";
+            dailyMessageDisplay.innerHTML = '<span class="italic text-gray-400">Loading daily message...</span>';
+            const message = await callGeminiApi(systemPrompt, userQuery);
+            dailyMessageDisplay.textContent = message || "Embrace the day with a grateful heart.";
+        }
+
+        async function reframeThought() {
+            const negativeThought = reframeInput.value.trim();
+            if (!negativeThought) return;
+            
+            reframeSendBtn.disabled = true;
+            reframeSendBtn.innerHTML = '<div class="loading-spinner"></div>';
+            reframeOutput.textContent = 'Reframing your thought...';
+
+            const systemPrompt = "You are an empathetic and encouraging AI. Your task is to reframe a single negative thought into a more balanced and positive perspective. Start with a calming phrase like 'Let's reframe that...' and then provide the new perspective. Keep it concise and supportive.";
+            const userQuery = `Reframe this thought: "${negativeThought}"`;
+            
+            const reframedText = await callGeminiApi(systemPrompt, userQuery);
+            
+            reframeOutput.textContent = reframedText || "I'm sorry, I couldn't reframe that right now. Please try again.";
+            
+            if (reframedText) {
+                updateUserData({
+                    points: 5,
+                    completedTasks: 1,
+                    thoughtHistory: {
+                        negative: negativeThought,
+                        positive: reframedText,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+                showModal("Task Complete! +5 Points!");
+            }
+            reframeSendBtn.disabled = false;
+            reframeSendBtn.innerHTML = 'Reframe It';
+        }
+
+        async function getInspirationPrompt() {
+            const systemPrompt = "You are a creative writing prompt generator. Provide a single, engaging and short creative prompt for a user to write about. Do not include any intros or outros, just the prompt itself.";
+            const userQuery = "Generate a creative writing prompt.";
+            
+            inspirationPromptDisplay.innerHTML = '<div class="loading-spinner w-full text-center"></div>';
+            const promptText = await callGeminiApi(systemPrompt, userQuery);
+            inspirationPromptDisplay.textContent = promptText || "Write about a time you felt truly free.";
+            inspirationSubmitBtn.disabled = false;
+        }
+
+        function startScreenBreakGame() {
+            screenBreakStartBtn.disabled = true;
+            let seconds = 30;
+            screenBreakTimer.textContent = seconds;
+
+            const timerId = setInterval(() => {
+                seconds--;
+                screenBreakTimer.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(timerId);
+                    screenBreakTimer.textContent = 'Complete!';
+                    updateUserData({ points: 3, completedTasks: 1 });
+                    screenBreakStartBtn.disabled = false;
+                    showModal("Task Complete! +3 Points!");
+                }
+            }, 1000);
+        }
+
+        function getDailyTask() {
+            const tasks = ['reframe', 'screen-break', 'inspiration'];
+            const taskType = tasks[Math.floor(Math.random() * tasks.length)];
+            
+            if (taskType === 'reframe') {
+                showView('reframe-game');
+            } else if (taskType === 'screen-break') {
+                showView('screen-break-game');
+                screenBreakTimer.textContent = '30';
+            } else {
+                showView('inspiration-game');
+                getInspirationPrompt();
+            }
+        }
+
+        function submitInspiration() {
+            const userWriting = inspirationInput.value.trim();
+            if (userWriting) {
+                updateUserData({
+                    points: 5,
+                    completedTasks: 1
+                });
+                showModal("Task Complete! +5 Points!");
+                inspirationInput.value = '';
+                showView('main-app');
+            }
+        }
+
+        // --- Event Listeners ---
+        window.onload = () => {
+            // Initialize UI elements here to ensure they exist
+            getTaskBtn = document.getElementById('get-task-btn');
+            pointsDisplay = document.getElementById('points-display');
+            badgesDisplay = document.getElementById('badges-display');
+            userProgress = document.getElementById('user-progress');
+            reframeInput = document.getElementById('reframe-input');
+            reframeOutput = document.getElementById('reframe-output');
+            reframeSendBtn = document.getElementById('reframe-send-btn');
+            screenBreakTimer = document.getElementById('screen-break-timer');
+            screenBreakStartBtn = document.getElementById('screen-break-start-btn');
+            reframeBackButton = document.getElementById('reframe-back-btn');
+            screenBreakBackButton = document.getElementById('screen-break-back-btn');
+            dailyMessageDisplay = document.getElementById('daily-message');
+            thoughtHistoryDisplay = document.getElementById('thought-history-display');
+            inspirationPromptDisplay = document.getElementById('inspiration-prompt');
+            inspirationInput = document.getElementById('inspiration-input');
+            inspirationSubmitBtn = document.getElementById('inspiration-submit-btn');
+            inspirationBackButton = document.getElementById('inspiration-back-btn');
+            statusModal = document.getElementById('status-modal');
+            statusMessage = document.getElementById('status-message');
+
+
+            initializeUserData();
+            showView('main-app');
+            generateDailyMessage();
+
+            getTaskBtn.addEventListener('click', getDailyTask);
+            reframeSendBtn.addEventListener('click', reframeThought);
+            reframeBackButton.addEventListener('click', () => {
+                showView('main-app');
+            });
+            screenBreakStartBtn.addEventListener('click', startScreenBreakGame);
+            screenBreakBackButton.addEventListener('click', () => {
+                showView('main-app');
+            });
+            inspirationSubmitBtn.addEventListener('click', submitInspiration);
+            inspirationBackButton.addEventListener('click', () => {
+                showView('main-app');
+            });
+        };
+    </script>
+    
+    <!-- MAIN APP INTERFACE -->
+    <div id="main-app" class="container active">
+        <header class="bg-white p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800">Your Dashboard</h1>
+            <p class="text-sm text-gray-500" id="daily-message">Loading daily message...</p>
+        </header>
+
+        <div class="p-6 flex-grow overflow-y-auto space-y-6">
+            <!-- Progress Section -->
+            <div class="bg-blue-100 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                    <p class="text-lg font-semibold text-blue-800">Current Points</p>
+                    <span id="points-display" class="text-4xl font-extrabold text-blue-600">0</span>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-medium text-blue-800">Badges Earned</p>
+                    <div id="badges-display" class="flex gap-1 justify-end mt-1">
+                        <!-- Badges will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Section -->
+            <div class="bg-green-50 rounded-xl p-6 text-center shadow-lg">
+                <h2 class="text-xl font-bold text-green-800 mb-2">Today's Task</h2>
+                <p class="text-sm text-gray-600 mb-4">Ready to improve your mental wellness? Take on a new task below.</p>
+                <button id="get-task-btn" class="w-full bg-green-500 text-white font-semibold p-3 rounded-xl hover:bg-green-600 transition-all shadow-lg">Get Today's Task</button>
+            </div>
+            
+            <!-- Progress Tracker -->
+            <div class="bg-gray-100 rounded-xl p-4 flex justify-between items-center">
+                <p class="text-sm font-medium text-gray-700" id="user-progress">Completed: 0 tasks</p>
+            </div>
+
+            <!-- Thought History -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-semibold text-gray-700">Reframing History</h3>
+                <div id="thought-history-display" class="space-y-2">
+                    <!-- Thought history will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- REFRAMING GAME VIEW -->
+    <div id="reframe-game" class="view-section justify-center items-center hidden">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full">
+            <h2 class="text-2xl font-bold text-center text-blue-600 mb-4">Reframing Game</h2>
+            <p class="text-center text-gray-600 mb-6">Type a negative thought you're having and I'll help you reframe it.</p>
+            <input id="reframe-input" type="text" placeholder="I'm not good enough..." class="w-full p-3 mb-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <button id="reframe-send-btn" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-xl hover:bg-blue-700 transition-all shadow-md">Reframe It</button>
+            
+            <div id="reframe-output" class="bg-gray-100 rounded-xl p-4 mt-6 text-gray-800 min-h-[100px] flex items-center justify-center text-center">
+                Your positive thought will appear here.
+            </div>
+            
+            <button id="reframe-back-btn" class="mt-6 w-full text-sm text-gray-500 hover:text-red-500 transition-colors">Back to Dashboard</button>
+        </div>
+    </div>
+    
+    <!-- SCREEN BREAK GAME VIEW -->
+    <div id="screen-break-game" class="view-section justify-center items-center hidden">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full text-center">
+            <h2 class="text-2xl font-bold text-center text-green-600 mb-4">Screen Break Game</h2>
+            <p class="text-center text-gray-600 mb-6">Take a break! Close your eyes and breathe for 30 seconds.</p>
+            
+            <div id="screen-break-timer" class="text-6xl font-extrabold text-green-600 mb-6">30</div>
+            
+            <button id="screen-break-start-btn" class="w-full bg-green-500 text-white font-semibold p-3 rounded-xl hover:bg-green-600 transition-all shadow-md">Start Timer</button>
+            
+            <button id="screen-break-back-btn" class="mt-6 w-full text-sm text-gray-500 hover:text-red-500 transition-colors">Back to Dashboard</button>
+        </div>
+    </div>
+    
+    <!-- INSPIRATION GAME VIEW -->
+    <div id="inspiration-game" class="view-section justify-center items-center hidden">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full">
+            <h2 class="text-2xl font-bold text-center text-purple-600 mb-4">Inspiration Challenge</h2>
+            <p class="text-center text-gray-600 mb-6">The AI has a creative prompt for you. Write your response below!</p>
+            
+            <div id="inspiration-prompt" class="bg-purple-100 rounded-xl p-4 mb-4 text-purple-800 min-h-[100px] flex items-center justify-center text-center italic">
+                Generating a prompt...
+            </div>
+            
+            <textarea id="inspiration-input" rows="4" placeholder="Start writing here..." class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
+            
+            <button id="inspiration-submit-btn" class="w-full bg-purple-600 text-white font-semibold p-3 rounded-xl hover:bg-purple-700 transition-all shadow-md mt-4">Submit Your Writing</button>
+            
+            <button id="inspiration-back-btn" class="mt-6 w-full text-sm text-gray-500 hover:text-red-500 transition-colors">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Notifications -->
+    <div id="status-modal" class="modal">
+        <span id="status-message"></span>
+    </div>
+
+</body>
+</html>
